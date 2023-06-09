@@ -5,6 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
+
+	"github.com/briandowns/spinner"
 )
 
 func main() {
@@ -51,6 +54,9 @@ func processWordList(url, wordlist string) {
 
 	if resp.StatusCode == http.StatusOK {
 		// Fazer o loop pela URL/WordList
+		println("URL                                        ", url)
+		println("WordList                                   ", wordlist)
+
 		// Abrindo WordList
 		wl, err := os.Open(wordlist)
 		if err != nil {
@@ -60,20 +66,28 @@ func processWordList(url, wordlist string) {
 		defer wl.Close()
 
 		scanner := bufio.NewScanner(wl)
+		println("")
 		for scanner.Scan() {
 			word := scanner.Text()
 			path := url + "/" + word
+			// Cria um novo spinner
+			s := spinner.New(spinner.CharSets[9], 100*time.Millisecond)
+			// Inicia o spinner
+			s.Start()
+
 			res, err := http.Get(path)
 			if err != nil {
 				println("Erro: ", err.Error())
+				s.Stop() // Para o spinner em caso de erro
 				continue
 			}
 			if res.StatusCode != http.StatusOK {
-				println("Diferente de 200")
+
 			} else {
 				println(path, "->", res.StatusCode)
 			}
 
+			s.Stop() // Para o spinner após a conclusão de uma iteração
 		}
 
 		if err := scanner.Err(); err != nil {
